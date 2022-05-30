@@ -1,15 +1,25 @@
-import { useState, useEffect } from "react";
-import { catchError, interval, map, of, Subscription, switchMap } from "rxjs";
+import React from "react";
+import { useEffect } from "react";
+import { BehaviorSubject, catchError, from, interval, map, of, Subscription, switchMap, tap } from "rxjs";
 import { fromFetch } from "rxjs/fetch";
 import './Dictionary.css';
 
 export function Dictionary() {
 
-    const [imgUrl, setResult] = useState<string>();
+    const word$ = React.useRef(new BehaviorSubject(''));
+
+    function onValueChange(event: React.FormEvent<HTMLInputElement>) {
+        console.log('value change')
+        word$.current.next(event.currentTarget.value);        
+    }
 
     useEffect(() => {
 
-        const duckList$ = fromFetch(`https://api.dictionaryapi.dev/api/v2/entries/en/hello`).pipe(
+        const dictionarySearch$ = word$.current.pipe(
+            switchMap(word => fromFetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`))
+        );
+
+        const searchResult$ = dictionarySearch$.pipe(
             switchMap(response => {
                 if (response.ok) {
                     // 200 OK
@@ -26,10 +36,13 @@ export function Dictionary() {
             })
         );
 
-        duckList$.subscribe(x => console.log(x));
+        const foo = searchResult$.subscribe(x => console.log(x));
+        const bar = word$.current.subscribe(x => console.log(x));
 
         // Subscribe to the observable and update state for each emitted value.
         const subscription = new Subscription();
+        subscription.add(foo);
+        subscription.add(bar);
 
         // Unregister subscription to avoid memory leaks.
         return () => subscription.unsubscribe();
@@ -40,7 +53,7 @@ export function Dictionary() {
             <h1>Dictionary search</h1>
             <form className="dictionary-form">
                 <label htmlFor="input">Search word</label>
-                <input id="input" type="text" />
+                <input id="input" type="text" onChange={onValueChange} />
             </form>
             <h2>Here is your result</h2>
             <div className="dictionary-result">
