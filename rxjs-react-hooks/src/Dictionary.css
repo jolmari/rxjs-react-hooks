@@ -1,9 +1,18 @@
 .dictionary-form {
     display: flex;
     flex-direction: column;
+    padding: 1rem;
 }
 
 .dictionary-image {
     width: 10rem;
     height: 10rem;
+}
+
+.is-invalid {
+    border: 1px solid red;
+}
+
+.is-valid {
+    border: 1px solid green;
 }
